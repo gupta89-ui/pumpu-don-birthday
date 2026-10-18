@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { MotionConfig } from 'framer-motion'
 import BirthdayCard from './components/BirthdayCard'
 import BirthdayLetter from './components/BirthdayLetter'
+import BirthdayQuiz from './components/BirthdayQuiz'
 import Confetti from './components/Confetti'
 import FloatingHearts from './components/FloatingHearts'
 import MemoriesGallery from './components/MemoriesGallery'
@@ -19,6 +20,7 @@ export type Page =
   | 'passcode'
   | 'gift'
   | 'birthday'
+  | 'birthday-quiz'
   | 'prank'
   | 'investigation'
   | 'record'
@@ -58,9 +60,12 @@ export default function App() {
         return (
           <BirthdayCard
             onNext={() => setPage('memories')}
+            onQuiz={() => setPage('birthday-quiz')}
             onCaseFile={() => setPage('prank')}
           />
         )
+      case 'birthday-quiz':
+        return <BirthdayQuiz onExit={() => setPage('birthday')} />
       case 'prank':
         return <PrankLanding onNext={() => setPage('investigation')} />
       case 'investigation':

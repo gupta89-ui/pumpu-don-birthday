@@ -7,9 +7,11 @@ const letterColors = ['#e7747f', '#dbbd54', '#5dbab4', '#758ed0', '#9e82ba']
 
 export default function BirthdayCard({
   onNext,
+  onQuiz,
   onCaseFile
 }: {
   onNext: () => void
+  onQuiz: () => void
   onCaseFile: () => void
 }) {
   const [countdown, setCountdown] = useState(() =>
@@ -118,11 +120,14 @@ export default function BirthdayCard({
         <path d="M13 84h207" stroke="#8fc7ba" strokeWidth="2" strokeLinecap="round" strokeDasharray="4 7" />
       </svg>
 
-      <button onClick={onNext} className="scrapbook-button handwritten">
+      <button type="button" onClick={onNext} className="scrapbook-button handwritten">
         OPEN YOUR MEMORY BOOK 📸
       </button>
-      <button onClick={onCaseFile} className="birthday-case-link handwritten">
-        or take a silly birthday quiz first 🕵️
+      <button type="button" onClick={onQuiz} className="birthday-game-link handwritten">
+        PLAY “HOW WELL DO YOU KNOW KUM KUM?” 💖
+      </button>
+      <button type="button" onClick={onCaseFile} className="birthday-case-link handwritten">
+        or investigate a silly birthday mystery 🕵️
       </button>
     </motion.section>
   )

@@ -97,7 +97,7 @@ export default function PasscodeScreen({
               setInput(event.target.value.replace(/\D/g, '').slice(0, passcode.length))
               setMessage('')
             }}
-            aria-label="Enter your four digit birthday code"
+            aria-label={`Enter your ${passcode.length}-digit birthday code`}
             className="pin-input"
             aria-describedby="passcode-feedback"
           />

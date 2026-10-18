@@ -28,10 +28,20 @@ export default function MemoriesGallery({
     if (lightbox === null) return
     function closeOnEscape(event: KeyboardEvent) {
       if (event.key === 'Escape') setLightbox(null)
+      if (event.key === 'ArrowLeft') {
+        setLightbox((index) =>
+          index === null ? null : (index - 1 + memories.length) % memories.length
+        )
+      }
+      if (event.key === 'ArrowRight') {
+        setLightbox((index) =>
+          index === null ? null : (index + 1) % memories.length
+        )
+      }
     }
     window.addEventListener('keydown', closeOnEscape)
     return () => window.removeEventListener('keydown', closeOnEscape)
-  }, [lightbox])
+  }, [lightbox, memories.length])
 
   function markVideoAvailable(src: string) {
     setFailedVideos((failed) => failed.filter((item) => item !== src))
@@ -68,9 +78,10 @@ export default function MemoriesGallery({
                 type="button"
                 whileHover={{ scale: 1.03, rotate: index % 2 ? 1 : -1 }}
                 onClick={() => setLightbox(index)}
-                className="bg-white p-2 rounded-md shadow-sm text-left"
+                className="memory-card"
                 aria-label={`Open photo: ${memory.caption}`}
               >
+                <span className="memory-tape" aria-hidden="true"><span /></span>
                 <span className="block overflow-hidden rounded border-2 border-white shadow-sm">
                   <img
                     src={memory.image}
@@ -82,7 +93,7 @@ export default function MemoriesGallery({
                     }}
                   />
                 </span>
-                <span className="block text-sm handwritten mt-2">{memory.caption}</span>
+                <span className="memory-caption handwritten">{memory.caption}</span>
               </motion.button>
             )
           })}
@@ -166,21 +177,56 @@ export default function MemoriesGallery({
                   <button
                     type="button"
                     onClick={() => setLightbox(null)}
-                    className="px-3 py-2 rounded bg-pastel-yellow"
+                    className="lightbox-close-button"
                     aria-label="Close photo viewer"
                   >
                     Close ✕
                   </button>
                 </div>
-                <img
-                  src={memories[lightbox].image}
-                  alt={memories[lightbox].caption}
-                  className="lightbox-image"
-                  onError={(event) => {
-                    event.currentTarget.src = '/images/placeholder.svg'
-                  }}
-                />
-                <p className="handwritten mt-2 text-lg">{memories[lightbox].caption}</p>
+                <div className="lightbox-photo-row">
+                  {memories.length > 1 && (
+                    <button
+                      type="button"
+                      className="lightbox-nav-button"
+                      onClick={() =>
+                        setLightbox((index) =>
+                          index === null ? null : (index - 1 + memories.length) % memories.length
+                        )
+                      }
+                      aria-label="Previous photo"
+                    >
+                      ←
+                    </button>
+                  )}
+                  <img
+                    src={memories[lightbox].image}
+                    alt={memories[lightbox].caption}
+                    className="lightbox-image"
+                    onError={(event) => {
+                      event.currentTarget.src = '/images/placeholder.svg'
+                    }}
+                  />
+                  {memories.length > 1 && (
+                    <button
+                      type="button"
+                      className="lightbox-nav-button"
+                      onClick={() =>
+                        setLightbox((index) =>
+                          index === null ? null : (index + 1) % memories.length
+                        )
+                      }
+                      aria-label="Next photo"
+                    >
+                      →
+                    </button>
+                  )}
+                </div>
+                <p className="lightbox-caption handwritten">
+                  {memories[lightbox].caption}
+                </p>
+                <p className="lightbox-counter">
+                  Photo {lightbox + 1} of {memories.length}
+                </p>
               </motion.div>
             </motion.div>
           )}
@@ -189,10 +235,10 @@ export default function MemoriesGallery({
       )}
 
       <div className="flex justify-between mt-6 gap-4">
-        <button onClick={onPrev} className="underline">
+        <button type="button" onClick={onPrev} className="scrapbook-back-button">
           Back
         </button>
-        <button onClick={onNext} className="bg-pastel-pink px-5 py-3 rounded-lg">
+        <button type="button" onClick={onNext} className="scrapbook-button handwritten">
           READ YOUR LETTER 💌
         </button>
       </div>
