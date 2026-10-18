@@ -1,41 +1,56 @@
-import React, { useState, useRef } from 'react'
+import { useState } from 'react'
 
-type Props = { onNext: ()=>void; onPrev?: ()=>void }
-
-export default function NoButtonGame({ onNext, onPrev }: Props){
+export default function NoButtonGame({
+  onNext,
+  onPrev
+}: {
+  onNext: () => void
+  onPrev?: () => void
+}) {
   const [tries, setTries] = useState(0)
-  const [message, setMessage] = useState('Try again')
-  const noRef = useRef<HTMLButtonElement|null>(null)
-  const [unlocked, setUnlocked] = useState(false)
+  const [position, setPosition] = useState({ x: 0, y: 0 })
+  const unlocked = tries >= 5
 
-  function handleNoEnter(){
-    setTries(t=>t+1)
-    const el = noRef.current
-    if(!el) return
-    const x = (Math.random()*120) - 60
-    const y = (Math.random()*60) - 30
-    el.style.transform = `translate(${x}px, ${y}px)`
-    if(tries >= 4){
-      setMessage("Okay okay... you win 😂❤️")
-      setUnlocked(true)
-      if((window as any)._birthdayAudioEngine) (window as any)._birthdayAudioEngine.playDing()
-    }
+  function dodge() {
+    if (unlocked) return
+    setTries((count) => count + 1)
+    setPosition({
+      x: Math.random() * 100 - 50,
+      y: Math.random() * 40 - 20
+    })
   }
 
   return (
-    <div className="w-full max-w-xl paper-card p-6 handwritten text-center">
-      <h2 className="text-3xl">WHY DID YOU CLICK NO?! 😭</h2>
-      <p className="mt-4">{message}</p>
-      <div className="mt-6 flex justify-center gap-6">
-        <button className="px-6 py-3 bg-pastel-pink rounded-lg shadow" onClick={onNext}>YES</button>
-        <button ref={noRef} className="px-6 py-3 bg-pastel-blue rounded-lg shadow" onMouseEnter={handleNoEnter} onTouchStart={handleNoEnter} onClick={()=>setMessage('Try again')}>NO</button>
-      </div>
-      <div className="mt-4">
-        <button className={`px-4 py-2 rounded ${unlocked? 'bg-teal-300' : 'bg-gray-200 cursor-not-allowed'}`} onClick={unlocked? onNext: undefined}>{unlocked? "Okay let's go ❤️" : 'Keep trying'}</button>
-      </div>
-      <div className="mt-4">
-        <button className="text-sm underline" onClick={onPrev}>Back</button>
-      </div>
+    <div className="flex flex-col items-center gap-2">
+      <button
+        type="button"
+        onMouseEnter={dodge}
+        onTouchStart={(event) => {
+          if (!unlocked) {
+            event.preventDefault()
+            dodge()
+          }
+        }}
+        onClick={() => {
+          if (unlocked) {
+            onNext()
+          } else {
+            dodge()
+          }
+        }}
+        style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
+        className="px-6 py-3 bg-pastel-blue rounded-lg shadow transition-transform"
+      >
+        {unlocked ? "Okay, let's go ❤️" : 'NO 🙈'}
+      </button>
+      {!unlocked && (
+        <span className="text-xs text-slate-500">Psst... it might run away 😉</span>
+      )}
+      {onPrev && (
+        <button type="button" onClick={onPrev} className="text-sm underline">
+          Back
+        </button>
+      )}
     </div>
   )
 }

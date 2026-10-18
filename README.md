@@ -1,26 +1,25 @@
-# Handmade Birthday — Personalizable Surprise Website
+# Kum Kum's Birthday Surprise
 
-Quick start:
+A scrapbook-style birthday experience built with React, TypeScript, Vite, and Framer Motion. It includes a playful investigation, a birthday countdown, a photo and video scrapbook, a personal letter, background music, and a final collage.
 
-1. Install dependencies:
+## Run locally
 
 ```bash
 npm install
-```
-
-2. Run dev server:
-
-```bash
 npm run dev
 ```
 
-Where to customize:
+The four-digit birthday passcode is `1810`.
 
-- Edit `src/config/birthday.ts` to change `name`, `passcode`, `letter`, `memories`, and `finalMessage`.
-- Place your images in `public/images/` and reference them from the config (e.g. `/images/memory1.jpg`).
-- Add a music file at `public/sounds/bday.mp3` to enable background music (plays only after user interaction).
+## Personalize
 
-Notes:
+Update `src/config/birthday.ts` to edit Kum Kum's nickname, birthday, passcode, letter, captions, media paths, and final message. Images, videos, and music are served from `public/`; keep their filenames and extensions exact when changing those paths.
 
-- The design is mobile-first and uses Tailwind CSS and Framer Motion for animations.
-- This project is intentionally styled like a handmade scrapbook; replace images and text in `src/config/birthday.ts` to personalize.
+## Production
+
+```bash
+npm run build
+npm run preview
+```
+
+Vercel is configured for this Vite project in `vercel.json`: build with `npm run build` and publish `dist/`.

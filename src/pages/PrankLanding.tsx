@@ -1,49 +1,64 @@
-import React, { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { birthdayConfig } from '../config/birthday'
-import { motion } from 'framer-motion'
+import { getBirthdayCountdown, formatBirthdayDate } from '../utils/birthday'
 import NoButtonGame from '../components/NoButtonGame'
 
-export default function PrankLanding({onNext}:{onNext:()=>void}){
-  const [countdown, setCountdown] = useState('')
+export default function PrankLanding({ onNext }: { onNext: () => void }) {
+  const [countdown, setCountdown] = useState(() =>
+    getBirthdayCountdown(birthdayConfig.birthdayMonth, birthdayConfig.birthdayDay)
+  )
   const [showConfirm, setShowConfirm] = useState(false)
+  const birthdayDate = formatBirthdayDate(
+    birthdayConfig.birthdayMonth,
+    birthdayConfig.birthdayDay
+  )
 
-  useEffect(()=>{
-    function update(){
-      const now = new Date()
-      const target = new Date(now.getFullYear(), birthdayConfig.birthdayMonth-1, birthdayConfig.birthdayDay)
-      if(target < now) target.setFullYear(now.getFullYear()+1)
-      const diff = target.getTime() - now.getTime()
-      const days = Math.floor(diff / (1000*60*60*24))
-      const hrs = Math.floor((diff%(1000*60*60*24))/(1000*60*60))
-      const mins = Math.floor((diff%(1000*60*60))/(1000*60))
-      const secs = Math.floor((diff%(1000*60))/1000)
-      setCountdown(`${days}d ${hrs}h ${mins}m ${secs}s`)
-    }
-    update(); const id = setInterval(update,1000)
-    return ()=> clearInterval(id)
-  },[])
+  useEffect(() => {
+    const update = () =>
+      setCountdown(
+        getBirthdayCountdown(birthdayConfig.birthdayMonth, birthdayConfig.birthdayDay)
+      )
+    const id = window.setInterval(update, 1000)
+    return () => window.clearInterval(id)
+  }, [])
 
   return (
-    <div className="w-full max-w-xl paper-card p-6 handwritten text-center">
+    <section className="w-full max-w-xl paper-card p-6 md:p-8 handwritten text-center">
       <div className="text-2xl">🚨 IMPORTANT NOTICE 🚨</div>
-      <div className="mt-2">18 October ko ek bahut hi dangerous event hone wala hai...</div>
-      <div className="mt-3 text-lg">Subject: {birthdayConfig.name}</div>
-      <div className="mt-2 handwritten text-pink-600">Status: Birthday Incoming... 🎂</div>
-      <div className="mt-4 text-xl">Countdown: {countdown}</div>
+      <p className="mt-3">
+        {birthdayDate} ko ek bahut hi dangerous event hone wala hai...
+      </p>
+      <p className="mt-3 text-lg">Subject: {birthdayConfig.name}</p>
+      <p className="mt-2 text-pink-600">
+        Status: {countdown.isBirthday ? "It's her birthday today! 🎂" : 'Birthday incoming...'}
+      </p>
+      <p className="mt-4 text-xl">
+        {countdown.isBirthday
+          ? 'The birthday celebrations are officially under investigation 🎉'
+          : `Countdown: ${countdown.days}d ${countdown.hours}h ${countdown.minutes}m ${countdown.seconds}s`}
+      </p>
 
       {!showConfirm ? (
-        <div className="mt-6">
-          <button onClick={()=>setShowConfirm(true)} className="bg-pastel-yellow px-6 py-3 rounded-lg">I AM READY 😎</button>
-        </div>
+        <button
+          onClick={() => setShowConfirm(true)}
+          className="mt-6 bg-pastel-yellow px-6 py-3 rounded-lg shadow"
+        >
+          I AM READY 😎
+        </button>
       ) : (
         <div className="mt-6">
-          <div className="text-lg">Are you REALLY ready? 🤨</div>
-          <div className="mt-4 flex justify-center gap-4">
-            <button onClick={onNext} className="px-6 py-3 bg-pastel-pink rounded">YES 😎</button>
-            <NoButtonGame onNext={onNext} onPrev={()=>setShowConfirm(false)} />
+          <p className="text-lg">Are you REALLY ready? 🤨</p>
+          <div className="mt-4 flex flex-wrap justify-center items-center gap-4">
+            <button
+              onClick={onNext}
+              className="px-6 py-3 bg-pastel-pink rounded shadow"
+            >
+              YES 😎
+            </button>
+            <NoButtonGame onNext={onNext} onPrev={() => setShowConfirm(false)} />
           </div>
         </div>
       )}
-    </div>
+    </section>
   )
 }

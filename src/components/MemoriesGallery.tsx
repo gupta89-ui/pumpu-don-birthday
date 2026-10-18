@@ -1,52 +1,201 @@
-import React, { useState } from 'react'
-import { motion } from 'framer-motion'
-
-import { AnimatePresence } from 'framer-motion'
+import { useEffect, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { createPortal } from 'react-dom'
 import Sticker from './Sticker'
 
 type Memory = { image: string; caption: string }
+type VideoMemory = { src: string; poster: string; title: string; caption: string }
 
-export default function MemoriesGallery({ memories, onNext, onPrev }:{ memories: Memory[]; onNext:()=>void; onPrev?:()=>void }){
+export default function MemoriesGallery({
+  memories,
+  videos,
+  onNext,
+  onPrev
+}: {
+  memories: Memory[]
+  videos: VideoMemory[]
+  onNext: () => void
+  onPrev: () => void
+}) {
   const [lightbox, setLightbox] = useState<number | null>(null)
+  const [query, setQuery] = useState('')
+  const [failedVideos, setFailedVideos] = useState<string[]>([])
+  const filteredMemories = memories.filter((memory) =>
+    memory.caption.toLowerCase().includes(query.trim().toLowerCase())
+  )
+
+  useEffect(() => {
+    if (lightbox === null) return
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') setLightbox(null)
+    }
+    window.addEventListener('keydown', closeOnEscape)
+    return () => window.removeEventListener('keydown', closeOnEscape)
+  }, [lightbox])
+
+  function markVideoAvailable(src: string) {
+    setFailedVideos((failed) => failed.filter((item) => item !== src))
+  }
 
   return (
-    <div className="w-full max-w-4xl">
-      <div className="handwritten text-4xl mb-4 relative">Memories
-        <div className="absolute -top-4 -left-6"><Sticker /></div>
+    <section className="w-full max-w-5xl">
+      <div className="handwritten text-4xl mb-4 relative">
+        OUR MEMORY SCRAPBOOK 📸
+        <div className="absolute -top-5 right-0 md:right-8"><Sticker /></div>
       </div>
-      <div className="mb-4">
-        <div className="paper-card p-3 flex items-center gap-3">
-          <span>🔍</span>
-          <input className="flex-1 bg-transparent outline-none" placeholder="Moments of us ❤️" />
+      <p className="mb-5 handwritten text-lg">
+        A little collection of real moments. Let the photos tell their own story. 💌
+      </p>
+      <label className="paper-card p-3 flex items-center gap-3 mb-5">
+        <span aria-hidden="true">🔍</span>
+        <input
+          className="flex-1 min-w-0 bg-transparent outline-none"
+          type="search"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Find a memory ❤️"
+          aria-label="Search photo captions"
+        />
+      </label>
+
+      {filteredMemories.length > 0 ? (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 md:gap-4">
+          {filteredMemories.map((memory) => {
+            const index = memories.indexOf(memory)
+            return (
+              <motion.button
+                key={memory.image}
+                type="button"
+                whileHover={{ scale: 1.03, rotate: index % 2 ? 1 : -1 }}
+                onClick={() => setLightbox(index)}
+                className="bg-white p-2 rounded-md shadow-sm text-left"
+                aria-label={`Open photo: ${memory.caption}`}
+              >
+                <span className="block overflow-hidden rounded border-2 border-white shadow-sm">
+                  <img
+                    src={memory.image}
+                    alt={memory.caption}
+                    loading="lazy"
+                    className="memory-photo"
+                    onError={(event) => {
+                      event.currentTarget.src = '/images/placeholder.svg'
+                    }}
+                  />
+                </span>
+                <span className="block text-sm handwritten mt-2">{memory.caption}</span>
+              </motion.button>
+            )
+          })}
+        </div>
+      ) : (
+        <p className="paper-card p-5 text-center" role="status">
+          No photo captions match that search. Try another word 💌
+        </p>
+      )}
+
+      <div className="mt-10">
+        <p className="handwritten text-3xl mb-2">LITTLE MOMENTS, MOVING 🎞️</p>
+        <p className="mb-4 text-sm">Press play when you’re ready — sound never starts by itself.</p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {videos.map((video) => (
+            <article key={video.src} className="paper-card p-3">
+              <h2 className="handwritten text-2xl mb-2">{video.title}</h2>
+              {failedVideos.includes(video.src) ? (
+                <div className="video-frame">
+                  <div className="w-full h-full bg-white rounded-lg flex flex-col items-center justify-center p-4 text-center">
+                    <p role="status">This video could not be played. Check that the local file is available.</p>
+                    <button
+                      type="button"
+                      onClick={() => markVideoAvailable(video.src)}
+                      className="mt-3 underline"
+                    >
+                      TRY AGAIN ↻
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="video-frame">
+                  <video
+                    controls
+                    playsInline
+                    preload="metadata"
+                    poster={video.poster}
+                    className="w-full h-full rounded-lg bg-black object-contain"
+                    aria-label={video.title}
+                    onError={() =>
+                      setFailedVideos((failed) =>
+                        failed.includes(video.src) ? failed : [...failed, video.src]
+                      )
+                    }
+                  >
+                    <source src={video.src} type="video/mp4" />
+                    Your browser does not support embedded videos.
+                  </video>
+                </div>
+              )}
+              <p className="handwritten mt-2">{video.caption}</p>
+            </article>
+          ))}
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {memories.map((m, i)=> (
-          <motion.div key={i} whileHover={{scale:1.04, rotate: (i%2?2:-2)}} className="bg-white p-2 rounded-md shadow-sm transform cursor-pointer" onClick={()=>setLightbox(i)}>
-            <div className="border-2 border-white shadow-sm" style={{transform: `rotate(${(i%5)-2}deg)`}}>
-              <img src={m.image} alt={m.caption} className="w-full h-44 object-cover" />
-            </div>
-            <div className="text-sm handwritten mt-2">{m.caption}</div>
-          </motion.div>
-        ))}
-      </div>
-
-      <AnimatePresence>
-      {lightbox !== null && (
-        <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 bg-black/70 flex items-center justify-center p-4">
-          <motion.div initial={{y:40, scale:0.95}} animate={{y:0, scale:1}} exit={{y:40, scale:0.95}} className="bg-white p-4 rounded-lg max-w-3xl max-h-[90vh] overflow-auto">
-            <img src={memories[lightbox].image} alt="" className="w-full h-auto rounded" />
-            <div className="handwritten mt-2 text-lg">{memories[lightbox].caption}</div>
-          </motion.div>
-        </motion.div>
+      {createPortal(
+        <AnimatePresence>
+          {lightbox !== null && memories[lightbox] && (
+            <motion.div
+              key="memory-lightbox"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="lightbox-overlay"
+              onClick={(event) => {
+                if (event.target === event.currentTarget) setLightbox(null)
+              }}
+              role="presentation"
+            >
+              <motion.div
+                initial={{ y: 24, scale: 0.98 }}
+                animate={{ y: 0, scale: 1 }}
+                exit={{ y: 24, scale: 0.98 }}
+                className="lightbox-panel"
+                role="dialog"
+                aria-modal="true"
+                aria-label="Memory photo viewer"
+              >
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setLightbox(null)}
+                    className="px-3 py-2 rounded bg-pastel-yellow"
+                    aria-label="Close photo viewer"
+                  >
+                    Close ✕
+                  </button>
+                </div>
+                <img
+                  src={memories[lightbox].image}
+                  alt={memories[lightbox].caption}
+                  className="lightbox-image"
+                  onError={(event) => {
+                    event.currentTarget.src = '/images/placeholder.svg'
+                  }}
+                />
+                <p className="handwritten mt-2 text-lg">{memories[lightbox].caption}</p>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>,
+        document.body
       )}
-      </AnimatePresence>
 
-      <div className="flex justify-between mt-6">
-        <button onClick={onPrev} className="underline">Back</button>
-        <button onClick={onNext} className="bg-pastel-yellow px-4 py-2 rounded">Next →</button>
+      <div className="flex justify-between mt-6 gap-4">
+        <button onClick={onPrev} className="underline">
+          Back
+        </button>
+        <button onClick={onNext} className="bg-pastel-pink px-5 py-3 rounded-lg">
+          READ YOUR LETTER 💌
+        </button>
       </div>
-    </div>
+    </section>
   )
 }

@@ -1,68 +1,142 @@
-import React, { useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { motion } from 'framer-motion'
-import Confetti from './Confetti'
-import Sticker from './Sticker'
-import Tape from './Tape'
+import { birthdayConfig } from '../config/birthday'
 
-// use global audio engine if present
-declare global { interface Window { _birthdayAudioEngine?: any } }
+const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'clear', '0', 'backspace']
+const starPositions = [
+  { top: '14%', left: '5%', tone: 'yellow' },
+  { top: '20%', left: '48%', tone: 'pink' },
+  { top: '72%', left: '8%', tone: 'blue' },
+  { top: '82%', left: '36%', tone: 'yellow' },
+  { top: '13%', right: '8%', tone: 'pink' },
+  { top: '76%', right: '6%', tone: 'blue' }
+]
 
-type Props = { passcode: string; onSuccess: ()=>void }
-
-export default function PasscodeScreen({ passcode, onSuccess }: Props){
+export default function PasscodeScreen({
+  passcode,
+  onSuccess
+}: {
+  passcode: string
+  onSuccess: () => void
+}) {
   const [input, setInput] = useState('')
-  const [shake, setShake] = useState(false)
-  const [success, setSuccess] = useState(false)
   const [message, setMessage] = useState('')
+  const [success, setSuccess] = useState(false)
 
-  function press(key:string){
-    if(key === '*' ) return setInput('')
-    if(key === '#'){
-      if(input === passcode){
-        setSuccess(true)
-        setMessage('Yay! Opening... 🎉')
-        if(window._birthdayAudioEngine) window._birthdayAudioEngine.playDing()
-        setTimeout(()=> onSuccess(), 900)
-      } else {
-        setShake(true)
-        setMessage("Hmm... try again 🥺")
-        if(window._birthdayAudioEngine) window._birthdayAudioEngine.playBuzz()
-        setTimeout(()=>{ setShake(false); setMessage('') },800)
-      }
+  function press(key: string) {
+    setMessage('')
+    if (key === 'clear') {
+      setInput('')
+    } else if (key === 'backspace') {
+      setInput((value) => value.slice(0, -1))
+    } else if (input.length < passcode.length) {
+      setInput((value) => value + key)
+    }
+  }
+
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (input !== passcode) {
+      setMessage('Oopsie, that code is not quite right! Try once more? 💌')
+      setInput('')
       return
     }
-    if(input.length >= 4) return
-    setInput(prev=>prev+key)
+
+    setSuccess(true)
+    setMessage('Yay! Opening your surprise... 🎉')
+    window.setTimeout(onSuccess, 550)
   }
 
   return (
-    <motion.div initial={{opacity:0}} animate={{opacity:1}} className="w-full max-w-3xl flex flex-col md:flex-row items-center gap-6 relative">
-      <div className="flex-1 flex items-center justify-center">
-        <div className="relative">
-          <img src="/images/character.svg" alt="cute character" className="w-56 h-56 object-contain" />
-          <div className="absolute -top-3 -left-6"><Tape /></div>
-          <div className="absolute -bottom-3 -right-6"><Sticker /></div>
-        </div>
+    <motion.section
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      className="pin-page"
+      aria-label="Kum Kum's birthday surprise passcode"
+    >
+      <div className="pin-decoration pin-paper-crease" aria-hidden="true" />
+      <div className="pin-stars" aria-hidden="true">
+        {starPositions.map(({ tone, ...position }, index) => (
+          <span key={index} className={`pin-star pin-star-${tone}`} style={position}>
+            ★
+          </span>
+        ))}
       </div>
 
-      <div className="flex-1 p-6 paper-card">
-        <h2 className="handwritten text-2xl mb-4">Enter a passcode 💌</h2>
-
-        <motion.div animate={shake?{x:[0,-10,10,-8,6,0]}:{x:0}} className="flex gap-2 mb-2">
-          {[0,1,2,3].map(i=> (
-            <div key={i} className="w-12 h-12 bg-white/80 rounded-md flex items-center justify-center shadow text-lg">{input[i] ? '•' : ''}</div>
-          ))}
-        </motion.div>
-
-        <div className="text-sm handwritten text-pink-600 mb-3">{message}</div>
-
-        <div className="grid grid-cols-3 gap-3">
-          {[1,2,3,4,5,6,7,8,9,'*',0,'#'].map(k=> (
-            <button key={k} onClick={()=>press(String(k))} className="py-4 rounded-lg bg-cream shadow-md active:scale-95">{k}</button>
-          ))}
+      <div className="pin-portrait-side">
+        <div className="portrait-frame">
+          <span className="portrait-ring portrait-ring-outer" />
+          <span className="portrait-ring portrait-ring-inner" />
+          <img
+            src="/images/pumpu1.jpeg"
+            alt="A favourite birthday memory"
+            className="portrait-photo"
+          />
+          <span className="portrait-flower portrait-flower-left" aria-hidden="true">✿</span>
+          <span className="portrait-flower portrait-flower-right" aria-hidden="true">✿</span>
+          <span className="portrait-heart" aria-hidden="true">♥</span>
         </div>
+        <p className="portrait-caption handwritten">a little memory, made with love</p>
       </div>
-      {success && <Confetti />}
-    </motion.div>
+
+      <div className="pin-panel">
+        <form onSubmit={submit} className="pin-form">
+          <p className="pin-kicker handwritten">a little surprise for</p>
+          <h1 className="pin-title handwritten">{birthdayConfig.nickname} 💗</h1>
+          <label htmlFor="birthday-passcode" className="pin-label handwritten">
+            Enter a passcode
+          </label>
+          <input
+            id="birthday-passcode"
+            type="password"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={passcode.length}
+            value={input}
+            onChange={(event) => {
+              setInput(event.target.value.replace(/\D/g, '').slice(0, passcode.length))
+              setMessage('')
+            }}
+            aria-label="Enter your four digit birthday code"
+            className="pin-input"
+            aria-describedby="passcode-feedback"
+          />
+          <div className="pin-dots" aria-hidden="true">
+            {Array.from({ length: passcode.length }, (_, index) => (
+              <span key={index} className={index < input.length ? 'pin-dot pin-dot-filled' : 'pin-dot'}>
+                {index < input.length ? '♥' : '·'}
+              </span>
+            ))}
+          </div>
+          <p id="passcode-feedback" className="pin-feedback handwritten" role="status">
+            {message || 'hint: birthday date ✨'}
+          </p>
+          <div className="pin-keypad" aria-label="Passcode keypad">
+            {keys.map((key) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => press(key)}
+                aria-label={
+                  key === 'backspace' ? 'Delete last digit' : key === 'clear' ? 'Clear code' : key
+                }
+                className="pin-key handwritten"
+                disabled={success}
+              >
+                {key === 'backspace' ? '⌫' : key === 'clear' ? '✿' : key}
+              </button>
+            ))}
+          </div>
+          <button
+            type="submit"
+            className="pin-unlock handwritten"
+            disabled={success || input.length !== passcode.length}
+          >
+            {success ? 'UNLOCKED 💝' : 'UNLOCK MY SURPRISE'}
+          </button>
+          <p className="pin-footer handwritten">made especially for {birthdayConfig.name}</p>
+        </form>
+      </div>
+    </motion.section>
   )
 }

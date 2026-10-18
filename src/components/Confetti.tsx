@@ -6,12 +6,15 @@ export default function Confetti(){
   useEffect(() => {
     const canvas = ref.current
     if (!canvas) return
-    const ctx = canvas.getContext('2d')!
+    const context = canvas.getContext('2d')
+    if (!context) return
+    const ctx: CanvasRenderingContext2D = context
     let width = canvas.width = window.innerWidth
     let height = canvas.height = window.innerHeight
 
     const colors = ['#FFD6E0','#D8EEFF','#FFF3C4','#E9D8FF','#8ED1C6']
-    const pieces: any[] = []
+    const pieces: { x: number; y: number; size: number; speed: number; color: string; rot: number }[] = []
+    const startedAt = performance.now()
     for(let i=0;i<120;i++){
       pieces.push({
         x: Math.random()*width,
@@ -26,6 +29,7 @@ export default function Confetti(){
     let raf = 0
     function render(){
       ctx.clearRect(0,0,width,height)
+      if (performance.now() - startedAt >= 5000) return
       for(const p of pieces){
         p.y += p.speed
         p.x += Math.sin(p.y*0.01)*1.5
@@ -51,5 +55,5 @@ export default function Confetti(){
     return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', onResize) }
   }, [])
 
-  return <canvas ref={ref} className="pointer-events-none fixed inset-0 w-full h-full" />
+  return <canvas ref={ref} aria-hidden="true" className="confetti-canvas" />
 }

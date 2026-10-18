@@ -1,58 +1,134 @@
-import React, { useState } from 'react'
-import PasscodeScreen from './components/PasscodeScreen'
+import { useState } from 'react'
+import { MotionConfig } from 'framer-motion'
+import BirthdayCard from './components/BirthdayCard'
+import BirthdayLetter from './components/BirthdayLetter'
+import Confetti from './components/Confetti'
+import FloatingHearts from './components/FloatingHearts'
+import MemoriesGallery from './components/MemoriesGallery'
+import MusicToggle from './components/MusicToggle'
 import PageTransition from './components/PageTransition'
-import PrankLanding from './pages/PrankLanding'
-import Investigation from './pages/Investigation'
+import PasscodeScreen from './components/PasscodeScreen'
+import UniverseCollage from './components/UniverseCollage'
 import CriminalRecord from './pages/CriminalRecord'
 import FakeGift from './pages/FakeGift'
-import FinalCountdown from './pages/FinalCountdown'
-import NoButtonGame from './components/NoButtonGame'
-import MemoriesGallery from './components/MemoriesGallery'
-import BirthdayLetter from './components/BirthdayLetter'
-import UniverseCollage from './components/UniverseCollage'
-import MusicToggle from './components/MusicToggle'
-import FloatingHearts from './components/FloatingHearts'
-import Confetti from './components/Confetti'
+import Investigation from './pages/Investigation'
+import PrankLanding from './pages/PrankLanding'
 import { birthdayConfig } from './config/birthday'
 
-export type Page = 0|1|2|3|4
+export type Page =
+  | 'passcode'
+  | 'gift'
+  | 'birthday'
+  | 'prank'
+  | 'investigation'
+  | 'record'
+  | 'memories'
+  | 'letter'
+  | 'final'
 
-export default function App(){
-  const [page, setPage] = useState<Page>(0)
+export default function App() {
+  const [page, setPage] = useState<Page>('passcode')
   const [showConfetti, setShowConfetti] = useState(false)
-  const key = page
+
+  function restart() {
+    setShowConfetti(false)
+    setPage('passcode')
+  }
+
+  function renderPage() {
+    switch (page) {
+      case 'passcode':
+        return (
+          <PasscodeScreen
+            passcode={birthdayConfig.passcode}
+            onSuccess={() => setPage('gift')}
+          />
+        )
+      case 'gift':
+        return (
+          <FakeGift
+            onNext={() => {
+              setShowConfetti(true)
+              setPage('birthday')
+            }}
+            onPrev={() => setPage('passcode')}
+          />
+        )
+      case 'birthday':
+        return (
+          <BirthdayCard
+            onNext={() => setPage('memories')}
+            onCaseFile={() => setPage('prank')}
+          />
+        )
+      case 'prank':
+        return <PrankLanding onNext={() => setPage('investigation')} />
+      case 'investigation':
+        return (
+          <Investigation
+            onNext={() => setPage('record')}
+            onPrev={() => setPage('prank')}
+          />
+        )
+      case 'record':
+        return (
+          <CriminalRecord
+            onNext={() => setPage('memories')}
+            onPrev={() => setPage('investigation')}
+          />
+        )
+      case 'memories':
+        return (
+          <MemoriesGallery
+            memories={birthdayConfig.memories}
+            videos={birthdayConfig.videos}
+            onNext={() => setPage('letter')}
+            onPrev={() => setPage('birthday')}
+          />
+        )
+      case 'letter':
+        return (
+          <BirthdayLetter
+            letter={birthdayConfig.letter}
+            onNext={() => setPage('final')}
+            onPrev={() => setPage('memories')}
+          />
+        )
+      case 'final':
+        return (
+          <UniverseCollage
+            memories={birthdayConfig.memories}
+            finalMessage={birthdayConfig.finalMessage}
+            onPrev={() => setPage('letter')}
+            onRestart={restart}
+          />
+        )
+    }
+  }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-4">
-      <MusicToggle />
-      <FloatingHearts />
-      {showConfetti && <Confetti />}
+    <MotionConfig reducedMotion="user">
+      <div
+        className={
+          page === 'passcode'
+            ? 'app-shell-pin'
+            : 'app-shell-standard min-h-screen flex flex-col items-center justify-center p-4'
+        }
+      >
+        <MusicToggle src={birthdayConfig.music.src} title={birthdayConfig.music.title} />
+        <FloatingHearts />
+        {showConfetti && <Confetti />}
 
-      <div className="w-full flex items-center justify-center">
-        {key === 0 && (
-          <PageTransition visible={key===0}><PrankLanding onNext={()=>setPage(1)} /></PageTransition>
-        )}
-
-        {key === 1 && (
-          <PageTransition visible={key===1}><Investigation onNext={()=>setPage(2)} /></PageTransition>
-        )}
-
-        {key === 2 && (
-          <PageTransition visible={key===2}><CriminalRecord onNext={()=>setPage(3)} /></PageTransition>
-        )}
-
-        {key === 3 && (
-          <PageTransition visible={key===3}><FakeGift onNext={()=>setPage(4)} /></PageTransition>
-        )}
-
-        {key === 4 && (
-          <PageTransition visible={key===4}><FinalCountdown onNext={()=>setPage(5)} /></PageTransition>
-        )}
-
-        {key === 5 && (
-          <PageTransition visible={key===5}><div className="paper-card p-6 handwritten text-center"> <div className="text-xl">Until then...</div><div className="mt-2">Please behave yourself.<br/>You are being monitored 👁️😂</div><div className="mt-4"><button onClick={()=>{ alert("HAHAHAHAHA 😂\nWe both know that's a lie."); setPage(0) }} className="bg-pastel-yellow px-6 py-3 rounded">I'LL BEHAVE 🤞</button></div></div></PageTransition>
-        )}
+        <main
+          className={
+            page === 'passcode'
+              ? 'page-main-pin'
+              : 'page-main-standard w-full flex items-center justify-center py-12'
+          }
+        >
+          <PageTransition pageKey={page}>{renderPage()}</PageTransition>
+        </main>
       </div>
-    </div>
+    </MotionConfig>
   )
 }

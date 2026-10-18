@@ -1,44 +1,56 @@
-import React, { useState } from 'react'
-import { getAudioEngine } from '../utils/audio'
+import { useRef, useState } from 'react'
 
-export default function MusicToggle(){
+export default function MusicToggle({ src, title }: { src: string; title: string }) {
+  const audioRef = useRef<HTMLAudioElement | null>(null)
   const [playing, setPlaying] = useState(false)
-  let engine = (window as any)._birthdayAudioEngine as ReturnType<typeof getAudioEngine> | undefined
-  const [sampleAvailable, setSampleAvailable] = useState(false)
-  const [usingSample, setUsingSample] = useState(false)
+  const [error, setError] = useState('')
 
-  React.useEffect(()=>{
-    (async ()=>{
-      try{
-        const res = await fetch('/sounds/vocal.mp3', { method: 'HEAD' })
-        setSampleAvailable(res.ok)
-      }catch(e){ setSampleAvailable(false) }
-    })()
-  },[])
+  async function toggle() {
+    const audio = audioRef.current
+    if (!audio) return
 
-  function toggle(){
-    if(!engine){ engine = getAudioEngine(); (window as any)._birthdayAudioEngine = engine }
-    if(playing){
-      if(usingSample && engine.playSample) engine.stopAll && engine.stopAll()
-      else engine.stopMelody()
-      setPlaying(false)
-    } else {
-      if(usingSample && engine.playSample) engine.playSample()
-      else engine.startMelody()
-      setPlaying(true)
+    if (playing) {
+      audio.pause()
+      return
+    }
+
+    setError('')
+    try {
+      await audio.play()
+    } catch (playError) {
+      console.error('Birthday music could not start:', playError)
+      setError('The music could not start. Tap play again or check your browser audio settings.')
     }
   }
 
   return (
-    <div className="fixed top-4 right-4">
-      <div className="flex gap-2 items-center">
-        <button onClick={toggle} aria-label="music toggle" className="px-3 py-2 bg-white rounded-full shadow">
-          {playing? '🔊' : '🔈'}
-        </button>
-        {sampleAvailable && (
-          <button onClick={()=>setUsingSample(s=>!s)} className={`px-3 py-2 rounded ${usingSample? 'bg-teal-200' : 'bg-gray-100'}`}>{usingSample? 'Sample' : 'Synth'}</button>
-        )}
-      </div>
+    <div className="music-toggle">
+      <audio
+        ref={audioRef}
+        src={src}
+        preload="none"
+        loop
+        onPlay={() => setPlaying(true)}
+        onPause={() => setPlaying(false)}
+        onError={() => {
+          setPlaying(false)
+          setError('This local music file could not be loaded.')
+        }}
+      />
+      <button
+        type="button"
+        onClick={toggle}
+        aria-label={playing ? `Pause ${title}` : `Play ${title}`}
+        aria-pressed={playing}
+        className="music-toggle-button"
+      >
+        {playing ? '⏸ Pause music' : '▶ Play music'}
+      </button>
+      {error && (
+        <p className="music-toggle-error" role="status">
+          {error}
+        </p>
+      )}
     </div>
   )
 }

@@ -1,14 +1,25 @@
-import React from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
+import type { ReactNode } from 'react'
 
-export default function PageTransition({ children, visible }:{ children: React.ReactNode; visible: boolean }){
+export default function PageTransition({
+  children,
+  pageKey
+}: {
+  children: ReactNode
+  pageKey: string
+}) {
   return (
     <AnimatePresence mode="wait">
-      {visible && (
-        <motion.div key={String(visible)} initial={{opacity:0, y:20}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}} transition={{duration:0.45}} className="w-full">
-          {children}
-        </motion.div>
-      )}
+      <motion.div
+        key={pageKey}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        transition={{ duration: 0.35 }}
+        className="w-full"
+      >
+        {children}
+      </motion.div>
     </AnimatePresence>
   )
 }
